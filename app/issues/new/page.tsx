@@ -2,12 +2,13 @@
 import axios from 'axios';
 import { Button, Callout, Text, TextArea, TextField } from '@radix-ui/themes';
 import { set, useForm } from 'react-hook-form';
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createIssueSchema } from '../../validationSchemas';
 import { z } from 'zod';
 import ErrorMessage from '@/app/components/ErrorMessage';
+import Spinner from '@/app/components/Spinner';
 
 type IssueForm = z.infer<typeof createIssueSchema>;
 
@@ -20,7 +21,8 @@ const NewIssuePage = () => {
   } = useForm<IssueForm>({
     resolver: zodResolver(createIssueSchema),
   });
-  const [error, setError] = React.useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   return (
     <div className='max-w-xl'>
       {error && (
@@ -32,9 +34,11 @@ const NewIssuePage = () => {
         className='space-y-4'
         onSubmit={handleSubmit(async (data) => {
           try {
+            setSubmitting(true);
             await axios.post('/api/issues', data);
             router.push('/issues');
           } catch (error) {
+            setSubmitting(false);
             setError('Failed to create issue. Please try again.');
           }
         })}
@@ -45,7 +49,9 @@ const NewIssuePage = () => {
         <ErrorMessage>{errors.title?.message}</ErrorMessage>
         <TextArea placeholder='Description' {...register('description')} />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
-        <Button>Submit New Issue</Button>
+        <Button type='submit' disabled={submitting}>
+          Submit New Issue {submitting && <Spinner />}
+        </Button>
       </form>
     </div>
   );
