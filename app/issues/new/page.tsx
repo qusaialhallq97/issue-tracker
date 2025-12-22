@@ -1,7 +1,7 @@
 'use client';
 import axios from 'axios';
 import { Button, Callout, Text, TextArea, TextField } from '@radix-ui/themes';
-import { set, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +23,17 @@ const NewIssuePage = () => {
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      setSubmitting(true);
+      await axios.post('/api/issues', data);
+      router.push('/issues');
+    } catch (error) {
+      setSubmitting(false);
+      setError('Failed to create issue. Please try again.');
+    }
+  });
   return (
     <div className='max-w-xl'>
       {error && (
@@ -30,19 +41,7 @@ const NewIssuePage = () => {
           <Callout.Text>{error}</Callout.Text>
         </Callout.Root>
       )}
-      <form
-        className='space-y-4'
-        onSubmit={handleSubmit(async (data) => {
-          try {
-            setSubmitting(true);
-            await axios.post('/api/issues', data);
-            router.push('/issues');
-          } catch (error) {
-            setSubmitting(false);
-            setError('Failed to create issue. Please try again.');
-          }
-        })}
-      >
+      <form className='space-y-4' onSubmit={onSubmit}>
         <TextField.Root>
           <TextField.Input placeholder='Title' {...register('title')} />
         </TextField.Root>
