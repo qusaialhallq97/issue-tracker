@@ -1,5 +1,7 @@
+import '@radix-ui/themes/styles.css';
 import './globals.css';
 import type { Metadata } from 'next';
+import { Theme } from '@radix-ui/themes';
 import { Inter } from 'next/font/google';
 import NavBar from './NavBar';
 
@@ -20,8 +22,10 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100`}
       >
-        <NavBar />
-        <main>{children}</main>
+        <Theme>
+          <NavBar />
+          <main>{children}</main>
+        </Theme>
       </body>
     </html>
   );
