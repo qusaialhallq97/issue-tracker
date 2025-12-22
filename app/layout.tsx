@@ -1,6 +1,7 @@
 import '@radix-ui/themes/styles.css';
 import './globals.css';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Script from 'next/script';
 import { Inter } from 'next/font/google';
 import NavBar from './NavBar';
@@ -18,15 +19,38 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = cookies();
+  const cookieTheme = cookieStore.get('theme')?.value;
+  const initialTheme =
+    cookieTheme === 'light' || cookieTheme === 'dark' ? cookieTheme : null;
+  const htmlClassName = initialTheme === 'dark' ? 'dark' : undefined;
+
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      className={htmlClassName}
+      style={initialTheme ? { colorScheme: initialTheme } : undefined}
+    >
       <head>
         <Script id='theme-init' strategy='beforeInteractive'>
           {`(() => {
   try {
     const stored = localStorage.getItem('theme');
+    const cookieMatch = document.cookie.match(/(?:^|; )theme=(dark|light)/);
+    const cookieTheme = cookieMatch ? cookieMatch[1] : null;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+    const theme =
+      stored === 'light' || stored === 'dark'
+        ? stored
+        : cookieTheme === 'light' || cookieTheme === 'dark'
+          ? cookieTheme
+          : prefersDark
+            ? 'dark'
+            : 'light';
+    if (stored !== theme) {
+      localStorage.setItem('theme', theme);
+    }
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.style.colorScheme = theme;
   } catch {}

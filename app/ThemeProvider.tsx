@@ -14,9 +14,19 @@ type ThemeContextValue = {
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 const storageKey = 'theme';
+const cookieMaxAge = 60 * 60 * 24 * 365;
 
 const getSystemTheme = () =>
   window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+const readCookieTheme = (): ThemeMode | null => {
+  const match = document.cookie.match(/(?:^|; )theme=(dark|light)/);
+  return match ? (match[1] as ThemeMode) : null;
+};
+
+const writeThemeCookie = (theme: ThemeMode) => {
+  document.cookie = `${storageKey}=${theme}; path=/; max-age=${cookieMaxAge}; samesite=lax`;
+};
 
 const applyThemeToDocument = (theme: ThemeMode) => {
   document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -26,6 +36,8 @@ const applyThemeToDocument = (theme: ThemeMode) => {
 const resolveInitialTheme = (): ThemeMode => {
   const stored = window.localStorage.getItem(storageKey);
   if (stored === 'light' || stored === 'dark') return stored;
+  const cookieTheme = readCookieTheme();
+  if (cookieTheme) return cookieTheme;
   return getSystemTheme();
 };
 
@@ -50,6 +62,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const setTheme = React.useCallback((nextTheme: ThemeMode) => {
     setThemeState(nextTheme);
     window.localStorage.setItem(storageKey, nextTheme);
+    writeThemeCookie(nextTheme);
   }, []);
 
   const toggleTheme = React.useCallback(() => {
