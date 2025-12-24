@@ -1,11 +1,14 @@
 'use client';
+
+import { Button, Callout, Text, TextField } from '@radix-ui/themes';
+import SimpleMDE from 'react-simplemde-editor';
+import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
-import { Button, Callout, Text, TextArea, TextField } from '@radix-ui/themes';
-import { useForm } from 'react-hook-form';
-import React, { useState } from 'react';
+import 'easymde/dist/easymde.min.css';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createIssueSchema } from '../../validationSchemas';
+import { createIssueSchema } from '@/app/validationSchemas';
 import { z } from 'zod';
 import ErrorMessage from '@/app/components/ErrorMessage';
 import Spinner from '@/app/components/Spinner';
@@ -16,13 +19,14 @@ const NewIssuePage = () => {
   const router = useRouter();
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<IssueForm>({
     resolver: zodResolver(createIssueSchema),
   });
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -31,25 +35,32 @@ const NewIssuePage = () => {
       router.push('/issues');
     } catch (error) {
       setSubmitting(false);
-      setError('Failed to create issue. Please try again.');
+      setError('An unexpected error occurred.');
     }
   });
+
   return (
     <div className='max-w-xl'>
       {error && (
-        <Callout.Root className='text-red-500 mb-5'>
+        <Callout.Root color='red' className='mb-5'>
           <Callout.Text>{error}</Callout.Text>
         </Callout.Root>
       )}
-      <form className='space-y-4' onSubmit={onSubmit}>
+      <form className='space-y-3' onSubmit={onSubmit}>
         <TextField.Root>
           <TextField.Input placeholder='Title' {...register('title')} />
         </TextField.Root>
         <ErrorMessage>{errors.title?.message}</ErrorMessage>
-        <TextArea placeholder='Description' {...register('description')} />
+        <Controller
+          name='description'
+          control={control}
+          render={({ field }) => (
+            <SimpleMDE placeholder='Description' {...field} />
+          )}
+        />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
-        <Button type='submit' disabled={submitting}>
-          Submit New Issue {submitting && <Spinner />}
+        <Button disabled={isSubmitting}>
+          Submit New Issue {isSubmitting && <Spinner />}
         </Button>
       </form>
     </div>
